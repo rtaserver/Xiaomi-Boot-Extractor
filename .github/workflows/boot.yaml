@@ -21,7 +21,7 @@ jobs:
     - name: Get latest release
       id: get_release
       run: |
-        latest_release=$(curl -s https://api.github.com/repos/ssut/payload-dumper-go/releases/latest | grep -o '"browser_download_url": *"[^"]*payload-dumper-go.*_linux_amd64.tar.gz"' | grep -o 'https://.*')
+        latest_release=$(curl -s https://api.github.com/repos/ssut/payload-dumper-go/releases/latest | grep -o '"browser_download_url": *"[^"]*payload-dumper-go.*_linux_amd64.tar.gz' | grep -o 'https://.*')
         echo "::set-output name=release_url::$latest_release"
 
     - name: fetch payload-dumper-go
