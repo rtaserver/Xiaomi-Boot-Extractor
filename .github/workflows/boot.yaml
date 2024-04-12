@@ -1,0 +1,46 @@
+name: Boot Extractor
+
+on:
+  workflow_dispatch:
+    inputs:
+      RECOVERY_LINK:
+        description: 'recovery rom link'
+        required: true
+        default: ''
+      PARTITIONS:
+        description: 'partitions to extract, comma separated'
+        required: true
+        default: 'boot,dtbo'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Get latest release
+      id: get_release
+      run: |
+        latest_release=$(curl -s https://api.github.com/repos/ssut/payload-dumper-go/releases/latest | grep -o '"browser_download_url": *"[^"]*payload-dumper-go.*_linux_amd64.tar.gz"' | grep -o 'https://.*')
+        echo "::set-output name=release_url::$latest_release"
+
+    - name: fetch payload-dumper-go
+      run: |
+        curl -Lo a.tar.gz "${{ steps.get_release.outputs.release_url }}"
+        tar -zxvf a.tar.gz
+
+    - name: fetch rom
+      run: |
+        curl -Lo rom.zip "${{ github.event.inputs.RECOVERY_LINK }}"
+
+    - name: extract
+      run: |
+        ./payload-dumper-go -p ${{ github.event.inputs.PARTITIONS }} rom.zip
+
+    - name: release build
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "extracted*/*.img"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: "${{ github.run_number }}_${{ github.run_attempt }}_ex"
+        body: "extracted from ${{ github.event.inputs.RECOVERY_LINK }}"
