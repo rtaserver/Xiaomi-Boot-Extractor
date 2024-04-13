@@ -13,31 +13,31 @@ on:
         default: 'boot,dtbo'
 
 jobs:
-  build:
+  extract-partitions:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-    - name: Get latest release
+    - name: Get latest Payload Dumper Go
       id: get_release
       run: |
         latest_release=$(curl -s https://api.github.com/repos/ssut/payload-dumper-go/releases/latest | grep -o '"browser_download_url": *"[^"]*payload-dumper-go.*_linux_amd64.tar.gz' | grep -o 'https://.*')
         echo "::set-output name=release_url::$latest_release"
 
-    - name: fetch payload-dumper-go
+    - name: Fetch Payload Dumper Go
       run: |
         curl -Lo a.tar.gz "${{ steps.get_release.outputs.release_url }}"
         tar -zxvf a.tar.gz
 
-    - name: fetch rom
+    - name: Download ROM Recovery
       run: |
-        curl -Lo rom.zip "${{ github.event.inputs.RECOVERY_LINK }}"
+        wget -q --show-progress -O rom.zip "${{ github.event.inputs.RECOVERY_LINK }}"
 
-    - name: extract
+    - name: Extract ROM
       run: |
         ./payload-dumper-go -p ${{ github.event.inputs.PARTITIONS }} rom.zip
 
-    - name: release build
+    - name: Upload Release
       uses: ncipollo/release-action@v1
       with:
         artifacts: "extracted*/*.img"
